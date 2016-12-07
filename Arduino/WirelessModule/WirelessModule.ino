@@ -1,6 +1,6 @@
 #include <SPI.h>
-#include <RFM69_OTA.h>//get it here: https://www.github.com/lowpowerlab/rfm69
- 
+#include <RFM69.h> //get it here: https://www.github.com/lowpowerlab/rfm69
+#include <SPIFlash.h> 
 //*********************************************************************************************
 // *********** IMPORTANT SETTINGS - YOU MUST CHANGE/CONFIGURE TO FIT YOUR HARDWARE ************
 //*********************************************************************************************
@@ -93,7 +93,7 @@ void ResetReply() {
   Serial.write(newMessage);
   Serial.write(RESET_CMD);
   Serial.write(0x00);
-  CRC16(RESET_CMD, ((byte)0));
+  //CRC16(RESET_CMD, ((byte)0));
 }
 
 void GetConfigReply () {
@@ -101,7 +101,7 @@ void GetConfigReply () {
   Serial.write(GET_CONFIG);
   Serial.write(request[2]);
   Serial.write(radio.readReg(request[2]));
-  CRC16(GET_CONFIG, radio.readReg(request[2]));
+  //CRC16(GET_CONFIG, radio.readReg(request[2]));
 }
 
 void SetConfigReply () {
@@ -110,7 +110,7 @@ void SetConfigReply () {
   Serial.write(SET_CONFIG);
   Serial.write(request[2]);
   Serial.write(radio.readReg(request[2]));
-  CRC16(SET_CONFIG, radio.readReg(request[2]));
+  //CRC16(SET_CONFIG, radio.readReg(request[2]));
 }
 
 void TransmitParse() {
@@ -130,7 +130,7 @@ void TransmitReply () {
   Serial.write(newMessage);
   Serial.write(TRANSMIT_CMD);
   Serial.write(ackReceived);
-  CRC16(TRANSMIT_CMD, ackReceived);
+  //CRC16(TRANSMIT_CMD, ackReceived);
 }
 
 void ReceiveReply() {
@@ -152,7 +152,7 @@ void ReceiveReply() {
     Serial.write((char*)radio.DATA);
   }
   Serial.write(radio.RSSI);
-  CRC16(RECEIVE_CMD, RXReplyPayload);  
+  //CRC16(RECEIVE_CMD, RXReplyPayload);  
   radio.receiveDone(); //put radio in RX mode
   Serial.flush(); //make sure all serial data is clocked out before sleeping the MCU
 }
