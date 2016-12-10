@@ -11,7 +11,7 @@ test(`Reset wireless controller does send correct request message`, (t) => {
         (_: number) => Promise.resolve(res),
         (buffer: Buffer) => {
             t.equal(buffer.toString(`hex`), req.toString(`hex`));
-            return Promise.resolve();
+            return Promise.resolve(buffer.length);
         }
     );
 
@@ -30,7 +30,7 @@ test(`Send wireless controller does send correct request message`, (t) => {
         (_: number) => Promise.resolve(res),
         (buffer: Buffer) => {
             t.equal(buffer.toString(`hex`), req.toString(`hex`));
-            return Promise.resolve();
+            return Promise.resolve(buffer.length);
         }
     );
 

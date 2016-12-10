@@ -11,7 +11,7 @@ test(`Reset propulsion microcontroller does send correct request message`, (t) =
         (_: number) => Promise.resolve(res),
         (buffer: Buffer) => {
             t.equal(buffer.toString(`hex`), req.toString(`hex`));
-            return Promise.resolve();
+            return Promise.resolve(buffer.length);
         }
     );
 
@@ -28,7 +28,7 @@ test(`Set M1 and M2 speeds via propulsion microcontroller does send correct requ
         (_: number) => Promise.resolve(res),
         (buffer: Buffer) => {
             t.equal(buffer.toString(`hex`), req.toString(`hex`));
-            return Promise.resolve();
+            return Promise.resolve(buffer.length);
         }
     );
 
