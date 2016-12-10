@@ -26,7 +26,7 @@ export class WirelessCommunicationsMicrocontroller extends Microcontroller {
         }
 
         const request = new Message(0x04, payload);
-        const responseSize = Message.sizeWithPayload(1);
+        const responseSize = Message.sizeWithPayload(MAX_PAYLOAD_SIZE);
         return this.write(request.buffer)
             .then(() => this.read(responseSize))
             .then((buffer) => {
