@@ -2,6 +2,7 @@
     "compileOnSave": true,
     "compilerOptions": {
         "alwaysStrict": true,
+        "declaration": true,
         "inlineSourceMap": true,
         "lib": [
             "dom",
