@@ -44,6 +44,8 @@ short byteToShort(int index);
 /*****Wireless Module Specific Parameters****************************************/
 int pwrLvl = 31;
 bool ackReceived = false;
+bool rxDone;
+byte RXPayload [61];
 int TXRetries = 5;  // the number of times the radio will try resending
 int TXRetryWaitTime = 100;  //the time in ms to keep trying to TX
 RFM69 radio = RFM69(RFM69_CS, RFM69_IRQ, IS_RFM69HCW, RFM69_IRQN);
@@ -62,6 +64,16 @@ void setup() {
 }
  
 void loop() {
+  //check if something was received (could be an interrupt from the radio)
+  rxDone = radio.receiveDone();
+  if (rxDone) {
+//  if (radio.receiveDone()) {
+    memcpy(RXPayload, (void*)radio.DATA, 61);
+  }
+  if (radio.ACKRequested()) {
+    radio.sendACK();
+  }
+  
   if (Serial.available()) {
     Serial.readBytes(sRead, maxMsgLength);
     if ((sRead[0] == (char) newMessage) && (0x00 <= sRead[0] <= 0x0F)) {
@@ -194,19 +206,19 @@ void Transmit() {
 void Receive() {
   commandByte = 0;
   byte response[respLength];
-  byte RXPayload [61];
-  for(int i=0; i<61; i++) {
-    RXPayload[i] = 0;
-  }
-  //check if something was received (could be an interrupt from the radio)
-  bool rxDone = radio.receiveDone();
-  if (rxDone) {
-//  if (radio.receiveDone()) {
-    memcpy(RXPayload, (void*)radio.DATA, 61);
-  }
-  if (radio.ACKRequested()) {
-    radio.sendACK();
-  }
+//  byte RXPayload [61];
+//  for(int i=0; i<61; i++) {
+//    RXPayload[i] = 0;
+//  }
+//  //check if something was received (could be an interrupt from the radio)
+//  bool rxDone = radio.receiveDone();
+//  if (rxDone) {
+////  if (radio.receiveDone()) {
+//    memcpy(RXPayload, (void*)radio.DATA, 61);
+//  }
+//  if (radio.ACKRequested()) {
+//    radio.sendACK();
+//  }
   //Prepare the response message
   response[0] = newMessage;
   response[1] = RECEIVE_CMD;
@@ -221,7 +233,10 @@ void Receive() {
   response[respLength-2] = ((byte)(respCRC >> 8));  // gets the most significant 8 bits (leftmost) of the integer
   response[respLength-1] = (respCRC);  // gets the least signficant 8 bits (rightmost) of the integer
   respond (response);
-  radio.receiveDone(); //put radio in RX mode
+  for(int i=0; i<61; i++) {
+    RXPayload[i] = 0;
+  }
+  //radio.receiveDone(); //put radio in RX mode
 }
 
 bool reqCheck() {
