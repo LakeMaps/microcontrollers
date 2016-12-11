@@ -199,7 +199,9 @@ void Receive() {
     RXPayload[i] = 0;
   }
   //check if something was received (could be an interrupt from the radio)
-  if (radio.receiveDone()) {
+  bool rxDone = radio.receiveDone();
+  if (rxDone) {
+//  if (radio.receiveDone()) {
     memcpy(RXPayload, (void*)radio.DATA, 61);
   }
   if (radio.ACKRequested()) {
@@ -208,7 +210,8 @@ void Receive() {
   //Prepare the response message
   response[0] = newMessage;
   response[1] = RECEIVE_CMD;
-  response[2] = radio.receiveDone(); //true if a message is available
+  response[2] = rxDone; //true if a message is available
+//  response[2] = radio.receiveDone(); //true if a message is available
   for (int i = 0; i < 61; i++) {      //load the data received into the response message
     response[i+3] = RXPayload[i];
   }
