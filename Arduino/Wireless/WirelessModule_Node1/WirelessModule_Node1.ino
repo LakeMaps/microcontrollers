@@ -195,6 +195,9 @@ void Receive() {
   commandByte = 0;
   byte response[respLength];
   byte RXPayload [61];
+  for(int i=0; i<61; i++) {
+    RXPayload[i] = 0;
+  }
   //check if something was received (could be an interrupt from the radio)
   if (radio.receiveDone()) {
     memcpy(RXPayload, (void*)radio.DATA, 61);
