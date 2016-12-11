@@ -58,23 +58,23 @@ void loop() {
     ResetReply();
 }
 
-if (command == GET_CONFIG) {
-  GetConfigReply();
-}
-
-if (command == SET_CONFIG) {
-  SetConfigReply();
-}
-
-if (command == TRANSMIT_CMD) {
-  TransmitParse();
-  TransmitReply();
-}
-
-if (command == RECEIVE_CMD) {
-  ReceiveReply();
-}
+  if (command == GET_CONFIG) {
+    GetConfigReply();
   }
+
+  if (command == SET_CONFIG) {
+    SetConfigReply();
+  }
+
+  if (command == TRANSMIT_CMD) {
+    TransmitParse();
+    TransmitReply();
+  }
+
+  if (command == RECEIVE_CMD) {
+    ReceiveReply();
+  }
+}
 
 void ResetModule() {
   pinMode(RFM69_RST, OUTPUT);
