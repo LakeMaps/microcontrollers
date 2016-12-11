@@ -14,7 +14,7 @@ export class SerialPort {
 
     constructor(port: string) {
         this.port = new NativeSerialPort(port, {
-            baudrate: 9600,
+            baudrate: 115200,
         });
         this.port.on(`data`, this.onData.bind(this));
     }
