@@ -24,6 +24,7 @@ short respCRC;
 short reqCRC;
 void respond(byte response[]);
 bool reqCheck();
+short byteToShort(int index);
 
 /*****Propulsion Module Specific Parameters****************************************/
 PololuQik2s12v10 qik(11, 12, 13); //TX, RX, RESET pins
@@ -40,10 +41,10 @@ void GetCurrents();
 void GetErrors();
 void ErrorReply();
 int byteToInt(int index);
-short byteToShort(int index);
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
+  Serial.setTimeout(serialTimeout);
   qik.init();
 }
 
@@ -129,7 +130,7 @@ void GetConfig(){
   byte response[respLength];
   response[0] = newMessage;
   response[1] = GET_CONFIG;
-  response[2] = sRead[2]; // always write true after reset until we can determine how best to confirm successful reset
+  response[2] = sRead[2];
   response[3] = qik.getConfigurationParameter(sRead[2]);
   respCRC = crc.XModemCrc(response,0,(respLength-2));
   response[respLength-2] = ((byte)(respCRC >> 8));  // gets the most significant 8 bits (leftmost) of the integer
@@ -144,7 +145,7 @@ void SetConfig(){
   delay(4); // User manual specifies waiting 4ms for the execution of this commandByte. https://www.pololu.com/docs/0J29/5.d
   response[0] = newMessage;
   response[1] = SET_CONFIG;
-  response[2] = sRead[2]; // always write true after reset until we can determine how best to confirm successful reset
+  response[2] = sRead[2];
   response[3] = qik.getConfigurationParameter(sRead[2]);
   respCRC = crc.XModemCrc(response,0,(respLength-2));
   response[respLength-2] = ((byte)(respCRC >> 8));  // gets the most significant 8 bits (leftmost) of the integer
