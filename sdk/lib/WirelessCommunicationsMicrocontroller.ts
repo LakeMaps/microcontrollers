@@ -35,4 +35,16 @@ export class WirelessCommunicationsMicrocontroller extends Microcontroller {
                 return buffer;
             });
     }
+
+    recv() {
+        const request = new Message(0x03, Buffer.alloc(1));
+        const responseSize = Message.sizeWithPayload(64);
+        return this.write(request.buffer)
+            .then(() => this.read(responseSize))
+            .then((buffer) => {
+                if (!buffer.length)
+                    throw new Error(`Response from ${this.name} was incorrect`);
+                return buffer;
+            });
+    }
 }
