@@ -24,7 +24,7 @@ export class PropulsionMicrocontroller extends Microcontroller {
         return this.write(request.buffer)
             .then(() => this.read(responseSize))
             .then((buffer) => {
-                if (!buffer.equals(request.payload()))
+                if (!buffer.equals(request.buffer))
                     throw new Error(`Response from ${this.name} was incorrect`);
                 return buffer;
             });

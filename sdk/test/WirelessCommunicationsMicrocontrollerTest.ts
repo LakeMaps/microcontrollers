@@ -4,8 +4,8 @@ import {WirelessCommunicationsMicrocontroller} from '../lib/WirelessCommunicatio
 test(`Reset wireless controller does send correct request message`, (t) => {
     t.plan(2);
 
-    const req = Buffer.from(`AA00002020`, `hex`);
-    const res = Buffer.from(`00`, `hex`);
+    const req = Buffer.from(`AA00007A5D`, `hex`);
+    const res = Buffer.from(`AA00007A5D`, `hex`);
     const m = new WirelessCommunicationsMicrocontroller(
         `Propulsion Microcontroller`,
         (_: number) => Promise.resolve(res),
@@ -22,9 +22,9 @@ test(`Send wireless controller does send correct request message`, (t) => {
     t.plan(2);
 
     const req = Buffer.from(
-        `AA0400000000000000000000000000000000000000333333333333333333333333333333333333333333333333333333333333333333333333333333333333C4F5`, `hex`
+        `AA0400000000000000000000000000000000000000333333333333333333333333333333333333333333333333333333333333333333333333333333333333BFC3`, `hex`
     );
-    const res = Buffer.from(`01`, `hex`);
+    const res = Buffer.from(`AA0401A6B8`, `hex`);
     const m = new WirelessCommunicationsMicrocontroller(
         `Propulsion Microcontroller`,
         (_: number) => Promise.resolve(res),

@@ -4,7 +4,7 @@ import {PropulsionMicrocontroller} from '../lib/PropulsionMicrocontroller';
 test(`Reset propulsion microcontroller does send correct request message`, (t) => {
     t.plan(2);
 
-    const req = Buffer.from(`AA1000E02D`, `hex`);
+    const req = Buffer.from(`AA1000792E`, `hex`);
     const res = Buffer.alloc(1);
     const m = new PropulsionMicrocontroller(
         `Propulsion Microcontroller`,
@@ -21,8 +21,8 @@ test(`Reset propulsion microcontroller does send correct request message`, (t) =
 test(`Set M1 and M2 speeds via propulsion microcontroller does send correct request message`, (t) => {
     t.plan(2);
 
-    const req = Buffer.from(`AA1300000080000000004CFE`, `hex`);
-    const res = Buffer.from(`0000008000000000`, `hex`);
+    const req = Buffer.from(`AA1300000080000000001592`, `hex`);
+    const res = Buffer.from(`AA1300000080000000001592`, `hex`);
     const m = new PropulsionMicrocontroller(
         `Propulsion Microcontroller`,
         (_: number) => Promise.resolve(res),
