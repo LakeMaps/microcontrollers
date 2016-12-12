@@ -22,7 +22,7 @@ export class WirelessCommunicationsMicrocontroller extends Microcontroller {
             payload = payload.slice(0, MAX_PAYLOAD_SIZE);
         }
         if (payload.length < MAX_PAYLOAD_SIZE) {
-            payload = Buffer.concat([Buffer.alloc(MAX_PAYLOAD_SIZE - payload.length), payload]);
+            payload = Buffer.concat([payload, Buffer.alloc(MAX_PAYLOAD_SIZE - payload.length)]);
         }
 
         const request = new Message(0x04, payload);
