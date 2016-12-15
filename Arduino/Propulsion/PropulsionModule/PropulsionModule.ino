@@ -20,11 +20,13 @@ byte commandByte = 0;
 Crc16 crc;
 uint16_t respLength;
 uint16_t reqLength;
+byte errorType = 0;
 short respCRC;
 short reqCRC;
 void respond(byte response[]);
 bool reqCheck();
 short byteToShort(int index);
+void ErrorReply(byte errorByte);
 
 /*****Propulsion Module Specific Parameters****************************************/
 PololuQik2s12v10 qik(11, 12, 13); //TX, RX, RESET pins
@@ -51,7 +53,7 @@ void setup() {
 void loop() {
   if (Serial.available()) {
     Serial.readBytes(sRead, maxMsgLength);
-    if ((sRead[0] == (char) newMessage) && (0x10 <= sRead[0] <= 0x1F)) {
+    if ((sRead[0] == (char) newMessage) && (sRead[1] >= 0x10) && (sRead[1] <= 0x1F)) {
       commandByte = sRead[1];  // the commandByte byte is byte 1 of the request (second byte sent)
     }
     if (commandByte == RESET_CMD) {
@@ -225,19 +227,21 @@ bool reqCheck() {
     return true;
   }
   else {
-    ErrorReply();
+    errorByte = 0x01;
+    ErrorReply(errorByte);
     return false;
   }
 }
 
-void ErrorReply() {
+void ErrorReply(byte errorByte) {
   respLength = 5;
   byte response[respLength];
   response[0] = newMessage;
   response[1] = ERROR_CMD;
-  response[2] = 0x01;
+  response[2] = errorByte;
   respCRC = crc.XModemCrc(response,0,(respLength-2));
   response[respLength-2] = ((byte)(respCRC >> 8));  // gets the most significant 8 bits (leftmost) of the integer
   response[respLength-1] = (respCRC);  // gets the least signficant 8 bits (rightmost) of the integer
+  errorByte = 0;
   respond (response);
 }
