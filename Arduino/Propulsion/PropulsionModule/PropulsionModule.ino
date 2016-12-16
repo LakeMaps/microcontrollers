@@ -20,13 +20,13 @@ byte commandByte = 0;
 Crc16 crc;
 uint16_t respLength;
 uint16_t reqLength;
-byte errorType = 0;
+byte errorByte = 0;
 short respCRC;
 short reqCRC;
 void respond(byte response[]);
 bool reqCheck();
 short byteToShort(int index);
-void ErrorReply(byte errorByte);
+void errorReply(byte errorByte);
 
 /*****Propulsion Module Specific Parameters****************************************/
 PololuQik2s12v10 qik(11, 12, 13); //TX, RX, RESET pins
@@ -41,7 +41,7 @@ void SetConfig();
 void SetSpeeds();
 void GetCurrents();
 void GetErrors();
-void ErrorReply();
+void errorReply();
 int byteToInt(int index);
 
 void setup() {
@@ -159,6 +159,11 @@ void SetSpeeds(){
   commandByte = 0;
   M0Speed = byteToInt(2);
   M1Speed = byteToInt(4);
+  if ((M0Speed > 255) || (M0Speed < -255) || (M1Speed > 255) || (M1Speed < -255)) {
+    errorByte = 0x02;
+    errorReply(errorByte);
+    return;
+  }
   qik.setSpeeds(M0Speed,M1Speed);
   byte response[respLength];
   response[0] = newMessage;
@@ -228,12 +233,12 @@ bool reqCheck() {
   }
   else {
     errorByte = 0x01;
-    ErrorReply(errorByte);
+    errorReply(errorByte);
     return false;
   }
 }
 
-void ErrorReply(byte errorByte) {
+void errorReply(byte errorByte) {
   respLength = 5;
   byte response[respLength];
   response[0] = newMessage;
