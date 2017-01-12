@@ -1,12 +1,12 @@
 {
-  "private": true,
-  "name": "microcontrollers",
-  "version": "1.0.0",
+  "name": "microcontrollers-sdk",
+  "version": "0.10.0",
   "description": "Node.js SDK for Lake Maps' microcontrollers",
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc --pretty --project .",
-    "test": "true"
+    "test": "npm run build && tape test/*Test.js | tap-dot"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,15 @@
     "url": "https://github.com/LakeMaps/microcontrollers/issues"
   },
   "homepage": "https://github.com/LakeMaps/microcontrollers#readme",
+  "dependencies": {
+    "crc": "3.4.3",
+    "serialport": "4.0.6"
+  },
   "devDependencies": {
+    "@types/serialport": "4.0.6",
+    "@types/tape": "4.2.28",
+    "tap-dot": "1.0.5",
+    "tape": "4.6.3",
     "typescript": "2.1.1"
   }
 }
