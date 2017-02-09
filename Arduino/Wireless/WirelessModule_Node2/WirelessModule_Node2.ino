@@ -213,8 +213,8 @@ void Receive() {
   for (int i = 0; i < 61; i++) {      //load the data received into the response message
     response[i+3] = RXPayload[i];
   }
-  response[respLength-3] = (byte) (radio.RSSI >> 8); //RSSI is an int16_t
-  response[respLength-2] = radio.RSSI;
+  response[respLength-4] = (byte) (radio.RSSI >> 8); //RSSI is an int16_t
+  response[respLength-3] = radio.RSSI;
   respCRC = crc.XModemCrc(response,0,(respLength-2));
   response[respLength-2] = ((byte)(respCRC >> 8));  // gets the most significant 8 bits (leftmost) of the integer
   response[respLength-1] = (respCRC);  // gets the least signficant 8 bits (rightmost) of the integer
