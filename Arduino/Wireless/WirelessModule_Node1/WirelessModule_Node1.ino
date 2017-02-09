@@ -34,7 +34,7 @@ byte commandByte = 0;
 Crc16 crc;
 uint16_t respLength;
 uint16_t reqLength;
-byte errorType = 0;
+byte errorByte = 0;
 short respCRC;
 short reqCRC;
 void respond(byte response[]);

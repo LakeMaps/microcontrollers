@@ -3,12 +3,11 @@
 #include <SPIFlash.h> 
 #include <Crc16.h>
 
-//*********************************************************************************************
 // *********** IMPORTANT SETTINGS - YOU MUST CHANGE/CONFIGURE TO FIT YOUR HARDWARE ************
-//*********************************************************************************************
+
 #define NETWORKID 100  //the same on all nodes that talk to each other
 #define NODEID 2 
-#define RECEIVER  1  // The recipient of packets
+#define RECEIVER  1// The recipient of packets
 #define FREQUENCY  RF69_915MHZ
 #define ENCRYPTKEY "sampleEncryptKey" //exactly the same 16 characters/bytes on all nodes!
 #define IS_RFM69HCW true // set to 'true' if you are using an RFM69HCW module
@@ -27,7 +26,7 @@
 #define ERROR_CMD ((byte) 0x0F)
 
 /*****GENERIC PARAMETERS COMMON TO ALL CONTROL MODULES*****************************/
-const int maxMsgLength = 72; //varies depending on module but still required
+const int maxMsgLength = 68; //varies depending on module but still required
 char sRead[maxMsgLength];
 int serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
 const byte newMessage = 0xAA;
@@ -35,11 +34,13 @@ byte commandByte = 0;
 Crc16 crc;
 uint16_t respLength;
 uint16_t reqLength;
+byte errorByte = 0;
 short respCRC;
 short reqCRC;
 void respond(byte response[]);
 bool reqCheck();
 short byteToShort(int index);
+void ErrorReply(byte errorByte);
 
 /*****Wireless Module Specific Parameters****************************************/
 int pwrLvl = 31;
@@ -64,13 +65,9 @@ void setup() {
 }
  
 void loop() {
-//  for(int i=0; i<61; i++) {
-//    RXPayload[i] = 0;
-//  }
   //check if something was received (could be an interrupt from the radio)
   rxDone = radio.receiveDone();
   if (rxDone) {
-//  if (radio.receiveDone()) {
     memcpy(RXPayload, (void*)radio.DATA, 61);
   }
   if (radio.ACKRequested()) {
@@ -209,24 +206,10 @@ void Transmit() {
 void Receive() {
   commandByte = 0;
   byte response[respLength];
-//  byte RXPayload [61];
-//  for(int i=0; i<61; i++) {
-//    RXPayload[i] = 0;
-//  }
-//  //check if something was received (could be an interrupt from the radio)
-//  bool rxDone = radio.receiveDone();
-//  if (rxDone) {
-////  if (radio.receiveDone()) {
-//    memcpy(RXPayload, (void*)radio.DATA, 61);
-//  }
-//  if (radio.ACKRequested()) {
-//    radio.sendACK();
-//  }
   //Prepare the response message
   response[0] = newMessage;
   response[1] = RECEIVE_CMD;
   response[2] = rxDone; //true if a message is available
-//  response[2] = radio.receiveDone(); //true if a message is available
   for (int i = 0; i < 61; i++) {      //load the data received into the response message
     response[i+3] = RXPayload[i];
   }
@@ -239,7 +222,6 @@ void Receive() {
   for(int i=0; i<61; i++) {
     RXPayload[i] = 0;
   }
-  //radio.receiveDone(); //put radio in RX mode
 }
 
 bool reqCheck() {
@@ -250,20 +232,22 @@ bool reqCheck() {
     return true;
   }
   else {
-    ErrorReply();
+    errorByte = 0x01;
+    ErrorReply(errorByte);
     return false;
   }
 }
 
-void ErrorReply() {
+void ErrorReply(byte errorByte) {
   respLength = 5;
   byte response[respLength];
   response[0] = newMessage;
   response[1] = ERROR_CMD;
-  response[2] = 0x01;
+  response[2] = errorByte;
   respCRC = crc.XModemCrc(response,0,(respLength-2));
   response[respLength-2] = ((byte)(respCRC >> 8));  // gets the most significant 8 bits (leftmost) of the integer
   response[respLength-1] = (respCRC);  // gets the least signficant 8 bits (rightmost) of the integer
+  errorByte = 0;
   respond (response);
 }
 
