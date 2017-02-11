@@ -54,7 +54,7 @@ void ResetModule();
 void GetConfig();
 void SetConfig();
 void Transmit();
-void TransmitReply(int ackReceived);
+//  void TransmitReply(int ackReceived);
 void Receive();
 
 void setup() {
@@ -76,7 +76,7 @@ void loop() {
   
   if (Serial.available()) {
     Serial.readBytes(sRead, maxMsgLength);
-    if ((sRead[0] == (char) newMessage) && (0x00 <= sRead[0] <= 0x0F)) {
+    if ((sRead[0] == (char) newMessage) && (sRead[1] >= 0x00) && (sRead[1] <= 0x0F)) {
       commandByte = sRead[1];  // the commandByte byte is byte 1 of the request (second byte sent)
     }
     if (commandByte == RESET_CMD) {
