@@ -7,8 +7,8 @@
 // *********** IMPORTANT SETTINGS - YOU MUST CHANGE/CONFIGURE TO FIT YOUR HARDWARE ************
 
 #define NETWORKID 100  //the same on all nodes that talk to each other
-#define NODEID 2  // address of this node 
-#define RECEIVER  1 // address of recipient of packets
+#define NODEID 2  // address of this node
+#define RECEIVER  1// address of recipient of packets
 #define FREQUENCY  RF69_915MHZ
 #define ENCRYPTKEY "sampleEncryptKey" //exactly the same 16 characters/bytes on all nodes!
 #define IS_RFM69HCW true // set to 'true' if you are using an RFM69HCW module
@@ -47,6 +47,7 @@ void ErrorReply(byte errorByte);
 int pwrLvl = 31;
 bool ackReceived = false;
 bool rxDone;
+byte validData = 0;
 byte RXPayload [61];
 int TXRetries = 5;  // the number of times the radio will try resending
 int TXRetryWaitTime = 100;  //the time in ms to keep trying to TX
@@ -55,14 +56,23 @@ void ResetModule();
 void GetConfig();
 void SetConfig();
 void Transmit();
-//  void TransmitReply(int ackReceived);
 void Receive();
 
 void setup() {
   while (!Serial); // wait until serial console is open
   Serial.begin(SERIAL_BAUD);
   Serial.setTimeout(serialTimeout);  // the timeout for reading multiple bytes sequentially, in milliseconds
-  ResetModule();
+  //Reset Radio Module
+  pinMode(RFM69_RST, OUTPUT);
+  digitalWrite(RFM69_RST, HIGH);
+  delay(100);
+  digitalWrite(RFM69_RST, LOW);
+  delay(100);
+  // Initialize radio
+  radio.initialize(FREQUENCY,NODEID,NETWORKID);
+  radio.setHighPower();// Only for RFM69HCW & HW!
+  radio.setPowerLevel(pwrLvl); // power output ranges from 0 (5dBm) to 31 (20dBm)
+  radio.encrypt(ENCRYPTKEY);
 }
 
 void loop() {
@@ -210,16 +220,22 @@ void Receive() {
   //Prepare the response message
   response[0] = newMessage;
   response[1] = RECEIVE_CMD;
-  response[2] = rxDone; //true if a message is available
+    for (int i = 0; i < 61; i++) {
+      if (RXPayload[i] != 0x00) {
+        validData = 1;
+      }
+    }
+  response[2] = validData;
   for (int i = 0; i < 61; i++) {      //load the data received into the response message
     response[i+3] = RXPayload[i];
   }
   response[respLength-4] = (byte) (radio.RSSI >> 8); //RSSI is an int16_t
   response[respLength-3] = radio.RSSI;
   respCRC = crc.XModemCrc(response,0,(respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // gets the most significant 8 bits (leftmost) of the integer
+  response[respLength-2] = (byte) (respCRC >> 8);  // gets the most significant 8 bits (leftmost) of the integer
   response[respLength-1] = (respCRC);  // gets the least signficant 8 bits (rightmost) of the integer
   respond (response);
+  validData = 0;
   for(int i=0; i<61; i++) {
     RXPayload[i] = 0;
   }
