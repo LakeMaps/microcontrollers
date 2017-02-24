@@ -136,6 +136,7 @@ void respond(byte response[]) {
 
 void ResetModule() {
   commandByte = 0;
+  respLength = 5;
   byte response[respLength];
   pinMode(RFM69_RST, OUTPUT);
   digitalWrite(RFM69_RST, HIGH);
