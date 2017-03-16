@@ -11,26 +11,33 @@
 #define GET_ERRORS (byte) 0x15
 #define ERROR_CMD (byte) 0x1F
 #define SERIAL_BAUD 115200
+#define MAX_MSG_LENGTH 10
+#define RESET_RESP 5
+#define GET_CONFIG_RESP 6
+#define SET_CONFIG_RESP 6
+#define SET_SPEED_RESP 8
+#define GET_CURRENT_RESP 8
+#define GET_ERRORS_RESP 5
+#define ERROR_RESP 5
 
 /*****GENERIC PARAMETERS COMMON TO ALL CONTROL MODULES***************/
-const int maxMsgLength = 10;  // varies depending on module but still required
-char sRead[maxMsgLength];
+char sRead[MAX_MSG_LENGTH];
 int serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
-const byte newMessage = 0xAA;
-byte commandByte = 0;
+const uint8_t newMessage = 0xAA;
+uint8_t commandByte = 0;
 Crc16 crc;
 uint16_t respLength;
 uint16_t reqLength;
-byte errorByte = 0;
-short respCRC;
-short reqCRC;
-void respond(byte response[]);
+uint8_t errorByte = 0;
+uint16_t respCRC;
+uint16_t reqCRC;
+void respond(uint8_t response[]);
 bool reqCheck();
-short byteToShort(int index);
-void errorReply(byte errorByte);
+uint16_t byteToShort(int index);
+void errorReply(uint8_t errorByte);
 
 /*****Propulsion Module Specific Parameters**************************/
-PololuQik2s12v10 qik(11, 12, 13);  // TX, RX, RESET pins
+PololuQik2s12v10 qik(12, 13, 11);  // RX, TX, RESET pins on motor driver
 int M0Speed = 0;
 int M1Speed = 0;
 int M0Current = 0;
@@ -53,12 +60,11 @@ void setup() {
 
 void loop() {
   if (Serial.available()) {
-    Serial.readBytes(sRead, maxMsgLength);
+    Serial.readBytes(sRead, MAX_MSG_LENGTH);
     if ((sRead[0] == (char) newMessage) && (sRead[1] >= 0x10) && (sRead[1] <= 0x1F)) {
       commandByte = sRead[1];  // the commandByte byte is byte 1 of the request
     }
     if (commandByte == RESET_CMD) {
-      respLength = 5;
       reqLength = 5;
       if (reqCheck()) {
         ResetModule();
@@ -68,7 +74,6 @@ void loop() {
     }
 
     if (commandByte == GET_CONFIG) {
-      respLength = 6;
       reqLength = 5;
       if (reqCheck()) {
         GetConfig();
@@ -77,7 +82,6 @@ void loop() {
       }
     }
     if (commandByte == SET_CONFIG) {
-      respLength = 6;
       reqLength = 6;
       if (reqCheck()) {
         SetConfig();
@@ -86,7 +90,6 @@ void loop() {
       }
     }
     if (commandByte == SET_SPEEDS) {
-      respLength = 8;
       reqLength = 8;
       if (reqCheck()) {
         SetSpeeds();
@@ -95,7 +98,6 @@ void loop() {
       }
     }
     if (commandByte == GET_CURRENTS) {
-      respLength = 8;
       reqLength = 5;
       if (reqCheck()) {
         GetCurrents();
@@ -104,7 +106,6 @@ void loop() {
       }
     }
     if (commandByte == GET_ERRORS) {
-      respLength = 5;
       reqLength = 5;
       if (reqCheck()) {
         GetErrors();
@@ -115,7 +116,7 @@ void loop() {
   }
 }
 
-void respond(byte response[]) {
+void respond(uint8_t response[]) {
   for (int i = 0; i < respLength; i++) {
     Serial.write(response[i]);
   }
@@ -123,7 +124,7 @@ void respond(byte response[]) {
 
 void ResetModule() {
   commandByte = 0;
-  byte response[respLength];
+  uint8_t response[RESET_RESP];
   qik.init();
   response[0] = newMessage;
   response[1] = RESET_CMD;
@@ -136,7 +137,7 @@ void ResetModule() {
 
 void GetConfig() {
   commandByte = 0;
-  byte response[respLength];
+  uint8_t response[GET_CONFIG_RESP];
   response[0] = newMessage;
   response[1] = GET_CONFIG;
   response[2] = sRead[2];
@@ -149,7 +150,7 @@ void GetConfig() {
 
 void SetConfig() {
   commandByte = 0;
-  byte response[respLength];
+  uint8_t response[SET_CONFIG_RESP];
   qik.setConfigurationParameter(sRead[2], sRead[3]);
   delay(4);  // Manual specifies wait 4ms https://www.pololu.com/docs/0J29/5.d
   response[0] = newMessage;
@@ -172,7 +173,7 @@ void SetSpeeds() {
     return;
   }
   qik.setSpeeds(M0Speed, M1Speed);
-  byte response[respLength];
+  uint8_t response[SET_SPEED_RESP];
   response[0] = newMessage;
   response[1] = SET_SPEEDS;
   response[2] = ((byte)(M0Speed >> 8));  // get the MS 8 bits
@@ -189,7 +190,7 @@ void GetCurrents() {
   commandByte = 0;
   M0Current = qik.getM0CurrentMilliamps();
   M1Current = qik.getM1CurrentMilliamps();
-  byte response[respLength];
+  uint8_t response[GET_CURRENT_RESP];
   response[0] = newMessage;
   response[1] = GET_CURRENTS;
   response[2] = ((byte)(M0Current >> 8));  // get the MS 8 bits
@@ -205,7 +206,7 @@ void GetCurrents() {
 void GetErrors() {
   commandByte = 0;
   errors = qik.getErrors();
-  byte response[respLength];
+  uint8_t response[GET_ERRORS_RESP];
   response[0] = newMessage;
   response[1] = GET_ERRORS;
   response[2] = errors;
@@ -223,16 +224,16 @@ int byteToInt(int index) {
   return result;
 }
 
-short byteToShort(int index) {
-  short result = 0;
-  short first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
-  short second = (sRead[index+1]) & 0x00FF;
+uint16_t byteToShort(int index) {
+  uint16_t result = 0;
+  uint16_t first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
+  uint16_t second = (sRead[index+1]) & 0x00FF;
   result = (first | second);  // combine two bytes (now ints) into a single int
   return result;
 }
 
 bool reqCheck() {
-  byte request[reqLength];
+  uint8_t request[MAX_MSG_LENGTH];
   memcpy(request, sRead, reqLength);
   reqCRC = crc.XModemCrc(request, 0, (reqLength-2));
   if (reqCRC == byteToShort(reqLength-2)) {
@@ -244,9 +245,9 @@ bool reqCheck() {
   }
 }
 
-void errorReply(byte errorByte) {
+void errorReply(uint8_t errorByte) {
   respLength = 5;
-  byte response[respLength];
+  uint8_t response[ERROR_RESP];
   response[0] = newMessage;
   response[1] = ERROR_CMD;
   response[2] = errorByte;

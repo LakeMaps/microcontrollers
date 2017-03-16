@@ -25,30 +25,36 @@
 #define RECEIVE_CMD ((byte) 0x03)
 #define TRANSMIT_CMD ((byte) 0x04)
 #define ERROR_CMD ((byte) 0x0F)
+#define MAX_MSG_LENGTH 68
+#define RESET_RESP 5
+#define GET_CONFIG_RESP 6
+#define SET_CONFIG_RESP 6
+#define TX_RESP 5
+#define RX_RESP 68
+#define ERROR_RESP 5
 
 /*****GENERIC PARAMETERS COMMON TO ALL CONTROL MODULES*************************/
-const int maxMsgLength = 68;  // varies depending on module but still required
-char sRead[maxMsgLength];
+char sRead[MAX_MSG_LENGTH];
 int serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
-const byte newMessage = 0xAA;
-byte commandByte = 0;
+const uint8_t newMessage = 0xAA;
+uint8_t commandByte = 0;
 Crc16 crc;
 uint16_t respLength;
 uint16_t reqLength;
-byte errorByte = 0;
-short respCRC;
-short reqCRC;
+uint8_t errorByte = 0;
+uint16_t respCRC;
+uint16_t reqCRC;
 void respond(byte response[]);
 bool reqCheck();
-short byteToShort(int index);
+uint16_t byteToShort(int index);
 void ErrorReply(byte errorByte);
 
 /*****Wireless Module Specific Parameters**************************************/
 int pwrLvl = 31;
 bool ackReceived = false;
 bool rxDone;
-byte validData = 0;
-byte RXPayload[61];
+uint8_t validData = 0;
+uint8_t RXPayload[61];
 int TXRetries = 5;  // the number of times the radio will try resending
 int TXRetryWaitTime = 100;  // the time in ms to keep trying to TX
 RFM69 radio = RFM69(RFM69_CS, RFM69_IRQ, IS_RFM69HCW, RFM69_IRQN);
@@ -86,12 +92,11 @@ void loop() {
   }
 
   if (Serial.available()) {
-    Serial.readBytes(sRead, maxMsgLength);
+    Serial.readBytes(sRead, MAX_MSG_LENGTH);
     if ((sRead[0] == (char) newMessage) && (sRead[1] >= 0x00) && (sRead[1] <= 0x0F)) {
       commandByte = sRead[1];  // the commandByte byte is byte 1 of the request
     }
     if (commandByte == RESET_CMD) {
-      respLength = 5;
       reqLength = 5;
       if (reqCheck()) {
         ResetModule();
@@ -101,7 +106,6 @@ void loop() {
     }
 
     if (commandByte == GET_CONFIG) {
-      respLength = 6;
       reqLength = 5;
       if (reqCheck()) {
         GetConfig();
@@ -111,7 +115,6 @@ void loop() {
     }
 
     if (commandByte == SET_CONFIG) {
-      respLength = 6;
       reqLength = 6;
       if (reqCheck()) {
         SetConfig();
@@ -121,7 +124,6 @@ void loop() {
     }
 
     if (commandByte == TRANSMIT_CMD) {
-      respLength = 5;
       reqLength = 65;
       if (reqCheck()) {
         Transmit();
@@ -131,7 +133,6 @@ void loop() {
     }
 
     if (commandByte == RECEIVE_CMD) {
-      respLength = 68;
       reqLength = 5;
       if (reqCheck()) {
         Receive();
@@ -151,7 +152,7 @@ void respond(byte response[]) {
 
 void ResetModule() {
   commandByte = 0;
-  byte response[respLength];
+  uint8_t response[RESET_RESP];
   pinMode(RFM69_RST, OUTPUT);
   digitalWrite(RFM69_RST, HIGH);
   delay(100);
@@ -173,7 +174,7 @@ void ResetModule() {
 
 void GetConfig() {
   commandByte = 0;
-  byte response[respLength];
+  uint8_t response[GET_CONFIG_RESP];
   response[0] = newMessage;
   response[1] = GET_CONFIG;
   response[2] = sRead[2];
@@ -186,7 +187,7 @@ void GetConfig() {
 
 void SetConfig() {
   commandByte = 0;
-  byte response[respLength];
+  uint8_t response[SET_CONFIG_RESP];
   radio.writeReg(sRead[2], sRead[3]);
   response[0] = newMessage;
   response[1] = SET_CONFIG;
@@ -200,8 +201,8 @@ void SetConfig() {
 
 void Transmit() {
   commandByte = 0;
-  byte response[respLength];
-  byte TXPayload[61];
+  uint8_t response[TX_RESP];
+  uint8_t TXPayload[61];
   for (int i = 0; i < 61; i++) {
     TXPayload[i] = sRead[i+2];  // load the payload into the radio packet
   }
@@ -222,7 +223,7 @@ void Transmit() {
 
 void Receive() {
   commandByte = 0;
-  byte response[respLength];
+  uint8_t response[RX_RESP];
   // Prepare the response message
   response[0] = newMessage;
   response[1] = RECEIVE_CMD;
@@ -248,7 +249,7 @@ void Receive() {
 }
 
 bool reqCheck() {
-  byte request[reqLength];
+  uint8_t request[MAX_MSG_LENGTH];
   memcpy(request, sRead, reqLength);
   reqCRC = crc.XModemCrc(request, 0, (reqLength-2));
   if (reqCRC == byteToShort(reqLength-2)) {
@@ -261,8 +262,7 @@ bool reqCheck() {
 }
 
 void ErrorReply(byte errorByte) {
-  respLength = 5;
-  byte response[respLength];
+  uint8_t response[ERROR_RESP];
   response[0] = newMessage;
   response[1] = ERROR_CMD;
   response[2] = errorByte;
@@ -273,10 +273,10 @@ void ErrorReply(byte errorByte) {
   respond(response);
 }
 
-short byteToShort(int index) {
-  short result = 0;
-  short first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
-  short second = (sRead[index+1]) & 0x00FF;
+uint16_t byteToShort(int index) {
+  uint16_t result = 0;
+  uint16_t first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
+  uint16_t second = (sRead[index+1]) & 0x00FF;
   result = (first | second);  // combine bytes (now shorts) into a single int
   return result;
 }
