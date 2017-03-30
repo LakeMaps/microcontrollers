@@ -167,7 +167,7 @@ void SetSpeeds() {
   commandByte = 0;
   M0Speed = byteToInt(2);
   M1Speed = byteToInt(4);
-  if ((M0Speed > 255) || (M0Speed < -255) || (M1Speed > 255) || (M1Speed < -255)) {
+  if ((M0Speed > 127) || (M0Speed < -127) || (M1Speed > 127) || (M1Speed < -127)) {
     errorByte = 0x02;
     errorReply(errorByte);
     return;
