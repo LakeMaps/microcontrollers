@@ -17,7 +17,6 @@ install:
 env:
     - PROJECT=Arduino/Navigation
     - PROJECT=Arduino/Propulsion
-    - PROJECT=Arduino/Propulsion_Test
     - PROJECT=Arduino/Wireless_Basic
     - PROJECT=Arduino/Wireless_Boat
     - PROJECT=Arduino/Wireless_Shore
