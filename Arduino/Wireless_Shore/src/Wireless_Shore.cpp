@@ -85,7 +85,7 @@ void loop() {
   // check if something was received (could be an interrupt from the radio)
   rxDone = radio.receiveDone();
   if (rxDone) {
-    memcpy(RXPayload, reinterpret_cast<void*>(radio.DATA), 61);
+    memcpy(RXPayload, reinterpret_cast<volatile void*>(radio.DATA), 61);
   }
   if (radio.ACKRequested()) {
     radio.sendACK();
