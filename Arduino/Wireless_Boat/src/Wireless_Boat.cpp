@@ -93,7 +93,11 @@ void loop() {
 
   if (Serial.available()) {
     Serial.readBytes(sRead, MAX_MSG_LENGTH);
-    if ((sRead[0] == static_cast<char>(newMessage)) && (sRead[1] >= 0x00) && (sRead[1] <= 0x0F)) {
+    if (
+         (sRead[0] == static_cast<char>(newMessage))
+      && (sRead[1] >= 0x00)
+      && (sRead[1] <= 0x0F)
+    ) {
       commandByte = sRead[1];  // the commandByte byte is byte 1 of the request
     }
     if (commandByte == RESET_CMD) {
