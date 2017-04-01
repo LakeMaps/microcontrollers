@@ -1,6 +1,7 @@
 .virtualenv/
 .pioenvs/
 .piolibdeps/
-.travis.yml
+Arduino/**/.travis.yml
+!/.travis.yml
 .clang_complete
 .gcc-flags.json
