@@ -24,5 +24,4 @@ env:
 script:
     - cd $PROJECT
     - platformio run
-# Enable this once the errors have been resolved
-#     - cpplint --quiet --recursive .
+    - cpplint --quiet --recursive .
