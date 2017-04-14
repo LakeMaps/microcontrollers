@@ -61,7 +61,11 @@ void setup() {
 void loop() {
   if (Serial.available()) {
     Serial.readBytes(sRead, MAX_MSG_LENGTH);
-    if ((sRead[0] == (char) newMessage) && (sRead[1] >= 0x10) && (sRead[1] <= 0x1F)) {
+    if (
+         (sRead[0] == static_cast<char>(newMessage))
+      && (sRead[1] >= 0x10)
+      && (sRead[1] <= 0x1F)
+    ) {
       commandByte = sRead[1];  // the commandByte byte is byte 1 of the request
     }
     if (commandByte == RESET_CMD) {
@@ -167,7 +171,12 @@ void SetSpeeds() {
   commandByte = 0;
   M0Speed = byteToInt(2);
   M1Speed = byteToInt(4);
-  if ((M0Speed > 127) || (M0Speed < -127) || (M1Speed > 127) || (M1Speed < -127)) {
+  if (
+       (M0Speed > 127)
+    || (M0Speed < -127)
+    || (M1Speed > 127)
+    || (M1Speed < -127)
+  ) {
     errorByte = 0x02;
     errorReply(errorByte);
     return;
