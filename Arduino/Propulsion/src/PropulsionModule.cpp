@@ -10,7 +10,7 @@
 #define GET_CURRENTS (byte) 0x14
 #define GET_ERRORS (byte) 0x15
 #define ERROR_CMD (byte) 0x1F
-#define SERIAL_BAUD 115200
+#define SERIAL_BAUD 57600
 #define MAX_MSG_LENGTH 10
 #define RESET_RESP 5
 #define GET_CONFIG_RESP 6
@@ -21,28 +21,27 @@
 #define ERROR_RESP 5
 
 /*****GENERIC PARAMETERS COMMON TO ALL CONTROL MODULES***************/
-char sRead[MAX_MSG_LENGTH];
-int serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
+uint8_t sRead[MAX_MSG_LENGTH];
+int16_t serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
 const uint8_t newMessage = 0xAA;
 uint8_t commandByte = 0;
 Crc16 crc;
-uint16_t respLength;
 uint16_t reqLength;
 uint8_t errorByte = 0;
 uint16_t respCRC;
 uint16_t reqCRC;
-void respond(uint8_t response[]);
+void respond(uint8_t response[], uint16_t respLength);
 bool reqCheck();
-uint16_t byteToShort(int index);
+uint16_t byteToShort(int16_t index);
 void errorReply(uint8_t errorByte);
 
 /*****Propulsion Module Specific Parameters**************************/
 PololuQik2s12v10 qik(12, 13, 11);  // RX, TX, RESET pins on motor driver
-int M0Speed = 0;
-int M1Speed = 0;
-int M0Current = 0;
-int M1Current = 0;
-int errors = 0;
+int16_t M0Speed = 0;
+int16_t M1Speed = 0;
+int16_t M0Current = 0;
+int16_t M1Current = 0;
+int16_t errors = 0;
 void ResetModule();
 void GetConfig();
 void SetConfig();
@@ -50,7 +49,7 @@ void SetSpeeds();
 void GetCurrents();
 void GetErrors();
 void errorReply();
-int byteToInt(int index);
+int16_t byteToInt(int16_t index);
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
@@ -62,7 +61,7 @@ void loop() {
   if (Serial.available()) {
     Serial.readBytes(sRead, MAX_MSG_LENGTH);
     if (
-         (sRead[0] == static_cast<char>(newMessage))
+         (sRead[0] == static_cast<uint8_t>(newMessage))
       && (sRead[1] >= 0x10)
       && (sRead[1] <= 0x1F)
     ) {
@@ -120,8 +119,8 @@ void loop() {
   }
 }
 
-void respond(uint8_t response[]) {
-  for (int i = 0; i < respLength; i++) {
+void respond(uint8_t response[], uint16_t respLength) {
+  for (uint16_t i = 0; i < respLength; i++) {
     Serial.write(response[i]);
   }
 }
@@ -133,10 +132,10 @@ void ResetModule() {
   response[0] = newMessage;
   response[1] = RESET_CMD;
   response[2] = 0x01;  // always write true after reset
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (RESET_RESP-2));
+  response[RESET_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[RESET_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, RESET_RESP);
 }
 
 void GetConfig() {
@@ -146,10 +145,10 @@ void GetConfig() {
   response[1] = GET_CONFIG;
   response[2] = sRead[2];
   response[3] = qik.getConfigurationParameter(sRead[2]);
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (GET_CONFIG_RESP-2));
+  response[GET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[GET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, GET_CONFIG_RESP);
 }
 
 void SetConfig() {
@@ -161,10 +160,10 @@ void SetConfig() {
   response[1] = SET_CONFIG;
   response[2] = sRead[2];
   response[3] = qik.getConfigurationParameter(sRead[2]);
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (SET_CONFIG_RESP-2));
+  response[SET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[SET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, SET_CONFIG_RESP);
 }
 
 void SetSpeeds() {
@@ -189,10 +188,10 @@ void SetSpeeds() {
   response[3] = (M0Speed);  // get the LS 8 bits
   response[4] = ((byte)(M1Speed >> 8));  // get the MS 8 bits
   response[5] = (M1Speed);  // get the LS 8 bits
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (SET_SPEED_RESP-2));
+  response[SET_SPEED_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[SET_SPEED_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, SET_SPEED_RESP);
 }
 
 void GetCurrents() {
@@ -206,10 +205,10 @@ void GetCurrents() {
   response[3] = (M0Current);  // get the LS 8 bits
   response[4] = ((byte)(M1Current >> 8));  // get the MS 8 bits
   response[5] = (M1Current);  // get the LS 8 bits
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (GET_CURRENT_RESP-2));
+  response[GET_CURRENT_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[GET_CURRENT_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, GET_CURRENT_RESP);
 }
 
 void GetErrors() {
@@ -219,21 +218,21 @@ void GetErrors() {
   response[0] = newMessage;
   response[1] = GET_ERRORS;
   response[2] = errors;
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (GET_ERRORS_RESP-2));
+  response[GET_ERRORS_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[GET_ERRORS_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, GET_ERRORS_RESP);
 }
 
-int byteToInt(int index) {
-  int result = 0;
-  int first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
-  int second = (sRead[index+1]) & 0x00FF;
+int16_t byteToInt(int16_t index) {
+  int16_t result = 0;
+  int16_t first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
+  int16_t second = (sRead[index+1]) & 0x00FF;
   result = (first | second);  // combine two bytes (now ints) into a single int
   return result;
 }
 
-uint16_t byteToShort(int index) {
+uint16_t byteToShort(int16_t index) {
   uint16_t result = 0;
   uint16_t first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
   uint16_t second = (sRead[index+1]) & 0x00FF;
@@ -255,14 +254,13 @@ bool reqCheck() {
 }
 
 void errorReply(uint8_t errorByte) {
-  respLength = 5;
   uint8_t response[ERROR_RESP];
   response[0] = newMessage;
   response[1] = ERROR_CMD;
   response[2] = errorByte;
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
+  respCRC = crc.XModemCrc(response, 0, (ERROR_RESP-2));
+  response[ERROR_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[ERROR_RESP-1] = (respCRC);  // get the LS 8 bits
   errorByte = 0;
-  respond(response);
+  respond(response, ERROR_RESP);
 }

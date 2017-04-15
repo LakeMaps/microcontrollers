@@ -13,7 +13,7 @@
 #define ENCRYPTKEY "sampleEncryptKey"  // exactly the same on all nodes!
 #define IS_RFM69HCW true  // set to 'true' if you are using an RFM69HCW module
 
-#define SERIAL_BAUD   115200
+#define SERIAL_BAUD   57600
 #define RFM69_CS  10
 #define RFM69_IRQ 2
 #define RFM69_IRQN 0  // Pin 2 is IRQ 0!
@@ -34,8 +34,8 @@
 #define ERROR_RESP 5
 
 /*****GENERIC PARAMETERS COMMON TO ALL CONTROL MODULES*************************/
-char sRead[MAX_MSG_LENGTH];
-int serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
+uint8_t sRead[MAX_MSG_LENGTH];
+int16_t serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
 const uint8_t newMessage = 0xAA;
 uint8_t commandByte = 0;
 Crc16 crc;
@@ -44,19 +44,19 @@ uint16_t reqLength;
 uint8_t errorByte = 0;
 uint16_t respCRC;
 uint16_t reqCRC;
-void respond(byte response[]);
+void respond(byte response[], uint16_t respLength);
 bool reqCheck();
-uint16_t byteToShort(int index);
+uint16_t byteToShort(int16_t index);
 void ErrorReply(byte errorByte);
 
 /*****Wireless Module Specific Parameters**************************************/
-int pwrLvl = 31;
+int16_t pwrLvl = 31;
 bool ackReceived = false;
 bool rxDone;
 uint8_t validData = 0;
 uint8_t RXPayload[61];
-int TXRetries = 5;  // the number of times the radio will try resending
-int TXRetryWaitTime = 100;  // the time in ms to keep trying to TX
+int16_t TXRetries = 5;  // the number of times the radio will try resending
+int16_t TXRetryWaitTime = 100;  // the time in ms to keep trying to TX
 RFM69 radio = RFM69(RFM69_CS, RFM69_IRQ, IS_RFM69HCW, RFM69_IRQN);
 void ResetModule();
 void GetConfig();
@@ -65,7 +65,6 @@ void Transmit();
 void Receive();
 
 void setup() {
-  while (!Serial) {}  // wait until serial console is open
   Serial.begin(SERIAL_BAUD);
   Serial.setTimeout(serialTimeout);  // reading bytes sequentially, in ms
   // Reset Radio Module
@@ -90,11 +89,10 @@ void loop() {
   if (radio.ACKRequested()) {
     radio.sendACK();
   }
-
   if (Serial.available()) {
     Serial.readBytes(sRead, MAX_MSG_LENGTH);
     if (
-         (sRead[0] == static_cast<char>(newMessage))
+         (sRead[0] == static_cast<uint8_t>(newMessage))
       && (sRead[1] >= 0x00)
       && (sRead[1] <= 0x0F)
     ) {
@@ -148,8 +146,8 @@ void loop() {
 }
 
 
-void respond(byte response[]) {
-  for (int i = 0; i < respLength; i++) {
+void respond(uint8_t response[], uint16_t respLength) {
+  for (uint16_t i = 0; i < respLength; i++) {
     Serial.write(response[i]);
   }
 }
@@ -170,10 +168,10 @@ void ResetModule() {
   response[0] = newMessage;
   response[1] = RESET_CMD;
   response[2] = 0x01;  // always write true after reset
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (RESET_RESP-2));
+  response[RESET_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[RESET_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, RESET_RESP);
 }
 
 void GetConfig() {
@@ -183,10 +181,10 @@ void GetConfig() {
   response[1] = GET_CONFIG;
   response[2] = sRead[2];
   response[3] = radio.readReg(sRead[2]);
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (GET_CONFIG_RESP-2));
+  response[GET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[GET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, GET_CONFIG_RESP);
 }
 
 void SetConfig() {
@@ -197,17 +195,17 @@ void SetConfig() {
   response[1] = SET_CONFIG;
   response[2] = sRead[2];
   response[3] = radio.readReg(sRead[2]);
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (SET_CONFIG_RESP-2));
+  response[SET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[SET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, SET_CONFIG_RESP);
 }
 
 void Transmit() {
   commandByte = 0;
   uint8_t response[TX_RESP];
   uint8_t TXPayload[61];
-  for (int i = 0; i < 61; i++) {
+  for (uint16_t i = 0; i < 61; i++) {
     TXPayload[i] = sRead[i+2];  // load the payload into the radio packet
   }
   if (radio.sendWithRetry(RECEIVER, TXPayload, 61)) {  // target, msg, length
@@ -219,10 +217,10 @@ void Transmit() {
   response[0] = newMessage;
   response[1] = TRANSMIT_CMD;
   response[2] = ackReceived;
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  respCRC = crc.XModemCrc(response, 0, (TX_RESP-2));
+  response[TX_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[TX_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, TX_RESP);
 }
 
 void Receive() {
@@ -231,23 +229,23 @@ void Receive() {
   // Prepare the response message
   response[0] = newMessage;
   response[1] = RECEIVE_CMD;
-    for (int i = 0; i < 61; i++) {
+    for (uint16_t i = 0; i < 61; i++) {
       if (RXPayload[i] != 0x00) {
         validData = 1;
       }
     }
   response[2] = validData;
-  for (int i = 0; i < 61; i++) {  // load data received into response message
+  for (uint16_t i = 0; i < 61; i++) {  // load data received into response message
     response[i+3] = RXPayload[i];
   }
-  response[respLength-4] = (byte) (radio.RSSI >> 8);  // RSSI is an int16_t
-  response[respLength-3] = radio.RSSI;
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = (byte) (respCRC >> 8);  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
-  respond(response);
+  response[RX_RESP-4] = (byte) (radio.RSSI >> 8);  // RSSI is an int16_t
+  response[RX_RESP-3] = radio.RSSI;
+  respCRC = crc.XModemCrc(response, 0, (RX_RESP-2));
+  response[RX_RESP-2] = (byte) (respCRC >> 8);  // get the MS 8 bits
+  response[RX_RESP-1] = (respCRC);  // get the LS 8 bits
+  respond(response, RX_RESP);
   validData = 0;
-  for (int i = 0; i < 61; i++) {
+  for (uint16_t i = 0; i < 61; i++) {
     RXPayload[i] = 0;
   }
 }
@@ -265,19 +263,19 @@ bool reqCheck() {
   }
 }
 
-void ErrorReply(byte errorByte) {
+void ErrorReply(uint8_t errorByte) {
   uint8_t response[ERROR_RESP];
   response[0] = newMessage;
   response[1] = ERROR_CMD;
   response[2] = errorByte;
-  respCRC = crc.XModemCrc(response, 0, (respLength-2));
-  response[respLength-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
-  response[respLength-1] = (respCRC);  // get the LS 8 bits
+  respCRC = crc.XModemCrc(response, 0, (ERROR_RESP-2));
+  response[ERROR_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
+  response[ERROR_RESP-1] = (respCRC);  // get the LS 8 bits
   errorByte = 0;
-  respond(response);
+  respond(response, ERROR_RESP);
 }
 
-uint16_t byteToShort(int index) {
+uint16_t byteToShort(int16_t index) {
   uint16_t result = 0;
   uint16_t first = (sRead[index]) * 256;  // bit shifting to the left 8 bits
   uint16_t second = (sRead[index+1]) & 0x00FF;
