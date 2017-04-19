@@ -235,7 +235,7 @@ void Receive() {
       }
     }
   response[2] = validData;
-  for (uint16_t i = 0; i < 61; i++) {  // load data received into response message
+  for (uint16_t i = 0; i < 61; i++) {  // load data received into response msg
     response[i+3] = RXPayload[i];
   }
   response[RX_RESP-4] = (byte) (radio.RSSI >> 8);  // RSSI is an int16_t
