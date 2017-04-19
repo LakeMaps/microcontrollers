@@ -35,7 +35,7 @@
 
 /*****GENERIC PARAMETERS COMMON TO ALL CONTROL MODULES*************************/
 uint8_t sRead[MAX_MSG_LENGTH];
-int16_t serialTimeout = 5;  // the timeout in ms of a serial.readBytes commandByte
+int16_t serialTimeout = 5;  // the timeout (ms) of serial.readBytes commandByte
 const uint8_t newMessage = 0xAA;
 uint8_t commandByte = 0;
 Crc16 crc;
