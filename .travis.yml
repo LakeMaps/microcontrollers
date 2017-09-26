@@ -11,9 +11,6 @@ cache:
     directories:
         - "~/.platformio"
 
-install:
-    - pip install -U cpplint platformio
-
 env:
     - PROJECT=Arduino/Navigation
     - PROJECT=Arduino/Propulsion
