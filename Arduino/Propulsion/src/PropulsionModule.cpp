@@ -1,11 +1,17 @@
 #include <Arduino.h>
+
 #ifdef TINYDUINO
+
 #include <Wire.h>
 #include <MotorDriver.h>
+
 #else
+
 #include <SoftwareSerial.h>  // specific to Propulsion Module
 #include <PololuQik.h>  // specific to Propulsion Module
+
 #endif
+
 #include <Crc16.h>
 
 #define RESET_CMD (byte) 0x10
