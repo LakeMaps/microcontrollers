@@ -38,7 +38,6 @@ const uint8_t newMessage = 0xAA;
 uint8_t commandByte = 0;
 Crc16 crc;
 uint16_t reqLength;
-uint8_t errorByte = 0;
 uint16_t respCRC;
 uint16_t reqCRC;
 void respond(uint8_t response[], uint16_t respLength);
@@ -164,8 +163,7 @@ void ResetModule() {
 
 void GetConfig() {
 #ifdef TINYDUINO
-  errorByte = 0x03;
-  errorReply(errorByte);
+  errorReply(0x03);
 #else
   commandByte = 0;
   uint8_t response[GET_CONFIG_RESP];
@@ -182,8 +180,7 @@ void GetConfig() {
 
 void SetConfig() {
 #ifdef TINYDUINO
-  errorByte = 0x03;
-  errorReply(errorByte);
+  errorReply(0x03);
 #else
   commandByte = 0;
   uint8_t response[SET_CONFIG_RESP];
@@ -210,8 +207,7 @@ void SetSpeeds() {
     || (M1Speed > 127)
     || (M1Speed < -127)
   ) {
-    errorByte = 0x02;
-    errorReply(errorByte);
+    errorReply(0x02);
     return;
   }
 #ifdef TINYDUINO
@@ -235,8 +231,7 @@ void SetSpeeds() {
 
 void GetCurrents() {
 #ifdef TINYDUINO
-  errorByte = 0x03;
-  errorReply(errorByte);
+  errorReply(0x03);
 #else
   commandByte = 0;
   M0Current = qik.getM0CurrentMilliamps();
@@ -257,8 +252,7 @@ void GetCurrents() {
 
 void GetErrors() {
 #ifdef TINYDUINO
-  errorByte = 0x03;
-  errorReply(errorByte);
+  errorReply(0x03);
 #else
   commandByte = 0;
   errors = qik.getErrors();
@@ -296,8 +290,7 @@ bool reqCheck() {
   if (reqCRC == byteToShort(reqLength-2)) {
     return true;
   } else {
-    errorByte = 0x01;
-    errorReply(errorByte);
+    errorReply(0x01);
     return false;
   }
 }
