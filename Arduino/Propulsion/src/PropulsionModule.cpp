@@ -1,17 +1,6 @@
 #include <Arduino.h>
-
-#ifdef TINYDUINO
-
-#include <Wire.h>
-#include <MotorDriver.h>
-
-#else
-
-#include <SoftwareSerial.h>  // specific to Propulsion Module
-#include <PololuQik.h>  // specific to Propulsion Module
-
-#endif
-
+#include <SoftwareSerial.h>
+#include <PololuQik.h>
 #include <Crc16.h>
 
 #define RESET_CMD (byte) 0x10
@@ -46,20 +35,7 @@ uint16_t byteToShort(int16_t index);
 void errorReply(uint8_t errorByte);
 
 /*****Propulsion Module Specific Parameters**************************/
-#ifdef TINYDUINO
-#define MAX_PWM_VALUE 127
-#define MOTOR_DRIVER_TIMEOUT_MS 1000
-MotorDriver motorDriver(0);
-void initDriver() {
-  motorDriver.begin(MAX_PWM_VALUE);
-  motorDriver.setFailsafe(MOTOR_DRIVER_TIMEOUT_MS);
-}
-#else
 PololuQik2s12v10 qik(12, 13, 11);  // RX, TX, RESET pins on motor driver
-void initDriver() {
-  qik.init();
-}
-#endif
 int16_t M0Speed = 0;
 int16_t M1Speed = 0;
 int16_t M0Current = 0;
@@ -77,7 +53,7 @@ int16_t byteToInt(int16_t index);
 void setup() {
   Serial.begin(SERIAL_BAUD);
   Serial.setTimeout(serialTimeout);
-  initDriver();
+  qik.init();
 }
 
 void loop() {
@@ -151,7 +127,7 @@ void respond(uint8_t response[], uint16_t respLength) {
 void ResetModule() {
   commandByte = 0;
   uint8_t response[RESET_RESP];
-  initDriver();
+  qik.init();
   response[0] = newMessage;
   response[1] = RESET_CMD;
   response[2] = 0x01;  // always write true after reset
@@ -162,9 +138,6 @@ void ResetModule() {
 }
 
 void GetConfig() {
-#ifdef TINYDUINO
-  errorReply(0x03);
-#else
   commandByte = 0;
   uint8_t response[GET_CONFIG_RESP];
   response[0] = newMessage;
@@ -175,13 +148,9 @@ void GetConfig() {
   response[GET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[GET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, GET_CONFIG_RESP);
-#endif
 }
 
 void SetConfig() {
-#ifdef TINYDUINO
-  errorReply(0x03);
-#else
   commandByte = 0;
   uint8_t response[SET_CONFIG_RESP];
   qik.setConfigurationParameter(sRead[2], sRead[3]);
@@ -194,7 +163,6 @@ void SetConfig() {
   response[SET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[SET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, SET_CONFIG_RESP);
-#endif
 }
 
 void SetSpeeds() {
@@ -210,12 +178,7 @@ void SetSpeeds() {
     errorReply(0x02);
     return;
   }
-#ifdef TINYDUINO
-  motorDriver.setMotor(1, M0Speed);
-  motorDriver.setMotor(2, M1Speed);
-#else
   qik.setSpeeds(M0Speed, M1Speed);
-#endif
   uint8_t response[SET_SPEED_RESP];
   response[0] = newMessage;
   response[1] = SET_SPEEDS;
@@ -230,9 +193,6 @@ void SetSpeeds() {
 }
 
 void GetCurrents() {
-#ifdef TINYDUINO
-  errorReply(0x03);
-#else
   commandByte = 0;
   M0Current = qik.getM0CurrentMilliamps();
   M1Current = qik.getM1CurrentMilliamps();
@@ -247,13 +207,9 @@ void GetCurrents() {
   response[GET_CURRENT_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[GET_CURRENT_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, GET_CURRENT_RESP);
-#endif
 }
 
 void GetErrors() {
-#ifdef TINYDUINO
-  errorReply(0x03);
-#else
   commandByte = 0;
   errors = qik.getErrors();
   uint8_t response[GET_ERRORS_RESP];
@@ -264,7 +220,6 @@ void GetErrors() {
   response[GET_ERRORS_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[GET_ERRORS_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, GET_ERRORS_RESP);
-#endif
 }
 
 int16_t byteToInt(int16_t index) {
