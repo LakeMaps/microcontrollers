@@ -42,7 +42,7 @@ void errorReply(uint8_t errorByte);
 
 /*****Propulsion Module Specific Parameters**************************/
 #ifdef FEATHER
-Adafruit_MotorShield motorShield = Adafruit_MotorShield();
+auto motorShield = Adafruit_MotorShield();
 Adafruit_DCMotor *m0 = motorShield.getMotor(3);
 Adafruit_DCMotor *m1 = motorShield.getMotor(4);
 void initDriver() {
