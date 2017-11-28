@@ -1,6 +1,12 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#ifdef FEATHER
+#include <Wire.h>
+#include <Adafruit_MotorShield.h>
+#include "utility/Adafruit_MS_PWMServoDriver.h"
+#else
 #include <PololuQik.h>
+#endif
 #include <Crc16.h>
 
 #define RESET_CMD (byte) 0x10
@@ -35,7 +41,21 @@ uint16_t byteToShort(int16_t index);
 void errorReply(uint8_t errorByte);
 
 /*****Propulsion Module Specific Parameters**************************/
+#ifdef FEATHER
+auto motorShield = Adafruit_MotorShield();
+Adafruit_DCMotor *m0 = motorShield.getMotor(3);
+Adafruit_DCMotor *m1 = motorShield.getMotor(4);
+void initDriver() {
+  motorShield.begin();
+  m0->run(RELEASE);
+  m1->run(RELEASE);
+}
+#else
 PololuQik2s12v10 qik(12, 13, 11);  // RX, TX, RESET pins on motor driver
+void initDriver() {
+  qik.init();
+}
+#endif
 int16_t M0Speed = 0;
 int16_t M1Speed = 0;
 int16_t M0Current = 0;
@@ -53,7 +73,7 @@ int16_t byteToInt(int16_t index);
 void setup() {
   Serial.begin(SERIAL_BAUD);
   Serial.setTimeout(serialTimeout);
-  qik.init();
+  initDriver();
 }
 
 void loop() {
@@ -127,7 +147,7 @@ void respond(uint8_t response[], uint16_t respLength) {
 void ResetModule() {
   commandByte = 0;
   uint8_t response[RESET_RESP];
-  qik.init();
+  initDriver();
   response[0] = newMessage;
   response[1] = RESET_CMD;
   response[2] = 0x01;  // always write true after reset
@@ -138,6 +158,9 @@ void ResetModule() {
 }
 
 void GetConfig() {
+#ifdef FEATHER
+  errorReply(0x03);
+#else
   commandByte = 0;
   uint8_t response[GET_CONFIG_RESP];
   response[0] = newMessage;
@@ -148,9 +171,13 @@ void GetConfig() {
   response[GET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[GET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, GET_CONFIG_RESP);
+#endif
 }
 
 void SetConfig() {
+#ifdef FEATHER
+  errorReply(0x03);
+#else
   commandByte = 0;
   uint8_t response[SET_CONFIG_RESP];
   qik.setConfigurationParameter(sRead[2], sRead[3]);
@@ -163,6 +190,7 @@ void SetConfig() {
   response[SET_CONFIG_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[SET_CONFIG_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, SET_CONFIG_RESP);
+#endif
 }
 
 void SetSpeeds() {
@@ -178,7 +206,22 @@ void SetSpeeds() {
     errorReply(0x02);
     return;
   }
+#ifdef FEATHER
+  if (M0Speed < 0) {
+    m0->run(BACKWARD);
+  } else {
+    m0->run(FORWARD);
+  }
+  if (M1Speed < 0) {
+    m1->run(BACKWARD);
+  } else {
+    m1->run(FORWARD);
+  }
+  m0->setSpeed(abs(M0Speed));
+  m1->setSpeed(abs(M1Speed));
+#else
   qik.setSpeeds(M0Speed, M1Speed);
+#endif
   uint8_t response[SET_SPEED_RESP];
   response[0] = newMessage;
   response[1] = SET_SPEEDS;
@@ -193,6 +236,9 @@ void SetSpeeds() {
 }
 
 void GetCurrents() {
+#ifdef FEATHER
+  errorReply(0x03);
+#else
   commandByte = 0;
   M0Current = qik.getM0CurrentMilliamps();
   M1Current = qik.getM1CurrentMilliamps();
@@ -207,9 +253,13 @@ void GetCurrents() {
   response[GET_CURRENT_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[GET_CURRENT_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, GET_CURRENT_RESP);
+#endif
 }
 
 void GetErrors() {
+#ifdef FEATHER
+  errorReply(0x03);
+#else
   commandByte = 0;
   errors = qik.getErrors();
   uint8_t response[GET_ERRORS_RESP];
@@ -220,6 +270,7 @@ void GetErrors() {
   response[GET_ERRORS_RESP-2] = ((byte)(respCRC >> 8));  // get the MS 8 bits
   response[GET_ERRORS_RESP-1] = (respCRC);  // get the LS 8 bits
   respond(response, GET_ERRORS_RESP);
+#endif
 }
 
 int16_t byteToInt(int16_t index) {
