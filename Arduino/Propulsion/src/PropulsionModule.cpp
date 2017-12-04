@@ -51,7 +51,7 @@ void initDriver() {
   m1->run(RELEASE);
 }
 #else
-PololuQik2s12v10 qik(12, 13, 11);  // RX, TX, RESET pins on motor driver
+PololuQik2s12v10 qik(2, 3, 4);  // RX, TX, RESET pins on motor driver
 void initDriver() {
   qik.init();
 }
